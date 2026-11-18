@@ -1,0 +1,26 @@
+2026-11-13 04:07:31,496 INFO started host=127.0.0.1 port=8080 version=1.0.0
+2026-11-13 04:07:47,322 INFO method=GET path=/notes status=200 dur_ms=0
+2026-11-13 04:07:47,332 INFO method=GET path=/notes status=200 dur_ms=0
+2026-11-13 04:07:47,339 INFO method=GET path=/notes status=200 dur_ms=0
+2026-11-13 04:07:47,346 INFO method=GET path=/notes status=200 dur_ms=0
+2026-11-13 04:07:47,351 INFO method=GET path=/notes status=200 dur_ms=0
+2026-11-13 04:07:47,357 INFO method=GET path=/notes status=200 dur_ms=0
+2026-11-13 04:07:47,362 INFO method=GET path=/notes status=200 dur_ms=0
+2026-11-13 04:07:47,367 INFO method=GET path=/notes status=200 dur_ms=0
+2026-11-13 04:07:47,372 INFO method=GET path=/notes status=200 dur_ms=0
+2026-11-13 04:07:47,377 INFO method=GET path=/notes status=200 dur_ms=0
+2026-11-13 04:07:47,381 INFO method=GET path=/notes status=200 dur_ms=0
+2026-11-13 04:07:47,385 INFO method=GET path=/notes status=200 dur_ms=0
+2026-11-13 04:07:47,391 INFO method=GET path=/notes status=200 dur_ms=0
+2026-11-13 04:07:47,396 INFO method=GET path=/notes status=200 dur_ms=0
+2026-11-13 04:07:47,400 INFO method=GET path=/notes status=200 dur_ms=0
+2026-11-13 04:07:47,404 INFO method=GET path=/notes status=200 dur_ms=0
+2026-11-13 04:07:47,408 INFO method=GET path=/notes status=200 dur_ms=0
+2026-11-13 04:07:47,412 INFO method=GET path=/notes status=200 dur_ms=0
+2026-11-13 04:07:47,417 INFO method=GET path=/notes status=200 dur_ms=0
+2026-11-13 04:07:47,422 INFO method=GET path=/notes status=200 dur_ms=0
+2026-11-13 04:07:47,427 INFO method=POST path=/notes status=201 dur_ms=0
+2026-11-13 04:07:47,432 INFO method=POST path=/notes status=400 dur_ms=0
+2026-11-13 04:07:47,437 INFO method=GET path=/nope status=404 dur_ms=0
+2026-11-13 04:09:27,956 INFO method=GET path=/ status=200 dur_ms=0
+2026-11-13 04:09:50,828 INFO stopped
