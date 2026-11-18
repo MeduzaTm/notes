@@ -1,0 +1,7 @@
+# Настройки ruff для проекта «Заметки»
+line-length = 120
+target-version = "py313"
+
+[lint]
+# E: стиль pycodestyle, F: pyflakes (неиспользуемые импорты и переменные)
+select = ["E", "F"]

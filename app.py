@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
-"""Заметки v2.1: файловое хранилище и корректная остановка по сигналам."""
+"""Заметки v2.2: файловое хранилище, сигналы, /leak и /burn."""
 import json
 import logging
 import signal
 import os
 import sys
 import threading
+import time                                  # для busy-цикла в /burn
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
 
 VERSION = os.environ.get("APP_VERSION", "dev")
 HOST = os.environ.get("HOST", "127.0.0.1")
@@ -51,6 +52,10 @@ def add_note(text):
         return note["id"]
 
 
+LEAK = []                                    # сюда складываем занятую память
+LEAK_MAX_MB = int(os.environ.get("LEAK_MAX_MB", "1024"))   # потолок суммарной утечки
+
+
 class Handler(BaseHTTPRequestHandler):
     def send(self, code, body, ctype="application/json; charset=utf-8"):
         data = body.encode("utf-8")
@@ -63,8 +68,38 @@ class Handler(BaseHTTPRequestHandler):
     def json(self, code, obj):
         self.send(code, json.dumps(obj, ensure_ascii=False))
 
+    def _json(self, code, obj):
+        self.json(code, obj)
+
+    def _text(self, code, body):
+        self.send(code, body, "text/plain; charset=utf-8")
+
     def do_GET(self):
-        path = urlparse(self.path).path
+        parsed = urlparse(self.path)
+        qs = parse_qs(parsed.query)
+        # демонстрационные эндпоинты: в реальном сервисе их бы не было
+        if parsed.path == "/leak":
+            try:
+                mb = int(qs.get("mb", ["0"])[0])
+            except ValueError:
+                return self._json(400, {"error": "limit"})
+            if not 1 <= mb <= 256 or sum(len(b) for b in LEAK) // 1048576 + mb > LEAK_MAX_MB:
+                return self._json(400, {"error": "limit"})
+            LEAK.append(bytearray(mb * 1048576))     # bytearray занимает реальную память
+            total = sum(len(b) for b in LEAK) // 1048576
+            return self._text(200, "leaked total %d MB\n" % total)
+        if parsed.path == "/burn":
+            try:
+                sec = int(qs.get("sec", ["0"])[0])
+            except ValueError:
+                return self._json(400, {"error": "sec 0-60"})
+            if not 0 <= sec <= 60:
+                return self._json(400, {"error": "sec 0-60"})
+            end = time.monotonic() + sec
+            while time.monotonic() < end:            # активное ожидание грузит одно ядро
+                pass
+            return self._text(200, "burned %d\n" % sec)
+        path = parsed.path
         if path == "/":
             self.send(200, f"Notes service v{VERSION}\n", "text/plain; charset=utf-8")
         elif path == "/healthz":
@@ -100,6 +135,12 @@ class Handler(BaseHTTPRequestHandler):
         except OSError as e:
             print(f"ошибка хранилища: {e}", file=sys.stderr)
             self.json(500, {"error": "storage"})
+
+    def do_PUT(self):
+        # Контракт тестов урока 1.6: неподдерживаемый метод даёт 405.
+        self.json(405, {"error": "method not allowed"})
+
+    do_DELETE = do_PATCH = do_OPTIONS = do_PUT
 
     def log_message(self, fmt, *args):
         if getattr(self, "path", "") not in ("/healthz", "/readyz"):
