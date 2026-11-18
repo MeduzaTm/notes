@@ -1,0 +1,21 @@
+[Unit]
+Description=Сервис Заметки
+After=network.target
+
+[Service]
+User=notes
+Group=notes
+EnvironmentFile=/etc/notes/notes.env
+ExecStart=/usr/bin/python3 /opt/notes/app.py
+# Перезапуск после падения, пауза 2 секунды
+Restart=on-failure
+RestartSec=2
+# Ограничения: файловая система только для чтения, писать можно в данные
+ReadWritePaths=/var/lib/notes
+ProtectSystem=strict
+NoNewPrivileges=true
+ProtectHome=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
