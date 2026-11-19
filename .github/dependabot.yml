@@ -1,0 +1,12 @@
+version: 2
+updates:
+  # обновления версий actions из workflow
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+  # обновления pip-зависимостей
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
