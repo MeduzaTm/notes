@@ -12,6 +12,6 @@ run: ## запустить сервис на 127.0.0.1:$(PORT)
 test: ## прогнать unit-тесты
 	$(PYTHON) -m unittest -v
 
-lint: ## проверить синтаксис (скелет; настоящий линтер в уроке 3.3)
+lint: ## проверить синтаксис и стиль кода
 	$(PYTHON) -m py_compile app.py test_app.py
-	@echo "lint: синтаксис в порядке"
+	$(PYTHON) -m ruff check .
