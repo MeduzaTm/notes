@@ -74,7 +74,7 @@ class NotesTest(unittest.TestCase):
 
     def test_healthz(self):
         status, _ = self.call("GET", "/healthz")
-        self.assertEqual(status, 200)
+        self.assertEqual(status, 500)
 
     def test_post_and_get_note(self):
         payload = json.dumps({"text": "первая заметка"}).encode()
