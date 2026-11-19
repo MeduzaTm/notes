@@ -12,10 +12,8 @@ permissions:
 
 # Новый коммит в ту же ветку отменяет устаревший запуск
 concurrency:
-  # для PR группа общая на весь PR, для main у каждого запуска своя (run_id), поэтому на main ничего не отменяется и не склеивается в очередь
-  group: ci-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
-  # на PR отменяем устаревший запуск, на main не отменяем: каждый коммит должен быть проверен
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   lint:
@@ -23,12 +21,10 @@ jobs:
     # Зависшая задача не должна съедать часы: через 10 минут её остановят
     timeout-minutes: 10
     steps:
-      # Скачать код репозитория на раннер; токен после этого не оставляем в .git/config
-      - uses: actions/checkout@v7.0.1
-        with:
-          persist-credentials: false
+      # Скачать код репозитория на раннер
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
 
-      - uses: actions/setup-python@v7.1.0
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
         with:
           python-version: "3.13"
           cache: pip
@@ -50,14 +46,44 @@ jobs:
       matrix:
         python-version: ["3.13", "3.14"]
     steps:
-      - uses: actions/checkout@v7.0.1
-        with:
-          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
 
-      - uses: actions/setup-python@v7.1.0
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
         with:
           python-version: ${{ matrix.python-version }}
 
       # Внешних зависимостей у сервиса нет, ставить нечего
       - name: Тесты
         run: make test
+
+  # Добавлено в уроке 3.4: поиск секретов во всей истории PR
+  secrets:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          fetch-depth: 0        # нужна история, а не один последний коммит
+      - name: TruffleHog
+        uses: trufflesecurity/trufflehog@4dd8831c5f12599465d4d45c3c447b4018a34c85  # v3.97.9
+        with:
+          version: 3.97.9          # версия самого TruffleHog (тег образа без буквы v), отдельно от версии action
+          # найденный секрет любого статуса блокирует PR (почему так, в теории)
+          extra_args: --results=verified,unverified,unknown
+
+  # Добавлено в уроке 3.4: известные уязвимости в зависимостях
+  trivy-fs:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - name: Trivy fs
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25  # v0.36.0
+        with:
+          version: v0.74.0          # версия самого Trivy, отдельно от версии action
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln            # секреты уже ищет TruffleHog, тут только CVE
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true      # не шуметь про уязвимости без исправления
+          exit-code: "1"            # найдено: job красный
