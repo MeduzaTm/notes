@@ -1,0 +1,51 @@
+name: release
+
+# Запуск только по тегам вида v0.2.0
+on:
+  push:
+    tags: ['v*']
+
+# По умолчанию токен только читает
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    # Запись нужна только этому job: создать Release
+    permissions:
+      contents: write
+    steps:
+      # Закреплено по SHA (тег можно передвинуть, хеш нельзя), версия в комментарии
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          fetch-depth: 0    # нужна вся история, чтобы проверить следующий шаг
+
+      # Тег должен стоять на коммите из main, а не на чужой ветке
+      - name: Проверить, что тег стоит на main
+        run: |
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/main || { echo "тег стоит не на main"; exit 1; }
+
+      - name: Собрать архив и контрольную сумму
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          VERSION="${TAG#v}"
+          # Только файлы из коммита, без мусора рабочего каталога
+          git archive --format=tar.gz --prefix="notes-${VERSION}/" \
+            -o "notes-${VERSION}.tar.gz" HEAD
+          sha256sum "notes-${VERSION}.tar.gz" > "notes-${VERSION}.tar.gz.sha256"
+          ls -l notes-*
+
+      - name: Создать GitHub Release
+        env:
+          TAG: ${{ github.ref_name }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          # Суффикс после дефиса (rc, beta) означает пре-релиз
+          FLAGS=()
+          case "$TAG" in *-*) FLAGS=(--prerelease) ;; esac
+          gh release create "$TAG" notes-*.tar.gz notes-*.tar.gz.sha256 \
+            --title "notes ${TAG}" --generate-notes --verify-tag "${FLAGS[@]}"
