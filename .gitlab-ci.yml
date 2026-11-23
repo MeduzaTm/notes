@@ -1,0 +1,29 @@
+# Тот же конвейер, что и в .github/workflows/ci.yml, на языке GitLab CI
+stages:                 # порядок этапов: сначала lint, потом test
+  - lint
+  - test
+
+default:
+  image: python:3.13   # образ, в котором исполняется каждый script (в нём есть make)
+  cache:
+    key:
+      files:
+        - requirements-dev.txt   # имя кэша считается по хешу этого файла
+    paths:
+      - .cache/pip        # что сохранять между запусками
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"   # кэш pip внутри проекта, чтобы GitLab мог его сохранить
+  PIP_DISABLE_PIP_VERSION_CHECK: "1"            # не проверять свежесть самого pip: лишний запрос в сеть
+  PIP_ROOT_USER_ACTION: "ignore"                # в контейнере мы root, предупреждение pip не нужно
+
+lint:                   # имя job
+  stage: lint           # этап
+  script:               # команды: остановка на первой, вернувшей не 0
+    - pip install -r requirements-dev.txt
+    - make lint
+
+test:
+  stage: test
+  script:
+    - make test
